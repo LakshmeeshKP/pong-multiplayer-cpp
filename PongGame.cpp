@@ -93,7 +93,7 @@ void initSocket(){
 
     serverAddr.sin_port = htons(8080);
     //set server port address; make sure firewall allows communication through this port at both sides
-    //htons(host to network short) : converts the port from your computer’s native byte order (little endian) to the network byte order (big endian)
+    //htons(host to network short) : converts the port from your computerï¿½s native byte order (little endian) to the network byte order (big endian)
 
 
     //goto label defined to repeat player connection process
@@ -200,11 +200,6 @@ void initSocket(){
 // to send data to opponent
 void send_msg(){
        while(gameStarted){
-            //pause thread when someone scores
-            unique_lock<mutex> lock(mtx);
-            cond.wait(lock, [] { return !paused; });
-            lock.unlock();
-
             if (input=='1') { //server
                 int msg[3]={y,ball_x,ball_y};
                 send(clientSocket, (char*)msg, 3*sizeof(int), 0); // paddle position + ball position sent
@@ -219,10 +214,6 @@ void send_msg(){
 // to receive data from opponent
 void rec_msg(){
     while (gameStarted){
-        //pause thread when someone scores
-        unique_lock<mutex> lock(mtx);
-        cond.wait(lock, [] { return !paused; }); //blocks thread until true is returned
-        lock.unlock();
 
         if (input=='1'){ //server
             int msg;
@@ -404,7 +395,7 @@ void score(int side){  //0-left scored 1-right scored
     score_arr[side]++;
 
     //display score message for 3 seconds
-    cout<<(side? "left":"right")<<" scored!\n\n";
+    cout<<(side? "right":"left")<<" scored!\n\n";
     cout<<"left: "<<score_arr[0]<<"  right: "<<score_arr[1];
     this_thread::sleep_for(std::chrono::milliseconds(3000));
     system("cls");
@@ -435,15 +426,13 @@ void score(int side){  //0-left scored 1-right scored
 // for keyboard inputs to move paddle
 void player_input(){
     while(true){
-        int key; //store input key
-
         //for pausing after a score
         unique_lock<mutex> lock(mtx);
         cond.wait(lock, [] { return !paused; }); //blocks thread until true is returned
         lock.unlock();
 
         while(!kbhit()){} //wait until any key is pressed
-        key=_getch(); //get pressed key
+        int key=_getch(); //get pressed key
 
         //arrow keys are part of extended keys
         //extended keys are received as two characters
